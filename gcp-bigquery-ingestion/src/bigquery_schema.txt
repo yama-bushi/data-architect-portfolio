@@ -1,0 +1,70 @@
+CREATE OR REPLACE PROCEDURE framework.process_entity_creation(_db string,_schema string,_entity string, _drop boolean)
+BEGIN
+DECLARE db STRING;
+DECLARE schema STRING;
+DECLARE schema_stage STRING;
+DECLARE entity STRING;
+DECLARE table_strat STRING;
+DECLARE table string;
+DECLARE create_stage_sql STRING;
+DECLARE create_base_sql STRING;
+DECLARE select_stage_sql STRING;
+DECLARE update_clause_sql STRING;
+DECLARE insert_p1_sql STRING;
+DECLARE insert_p2_sql STRING;
+DECLARE biz_keys_sql STRING;
+DECLARE process_sproc STRING;
+SET db = _db;
+SET schema = _schema;
+SET schema_stage = CONCAT(_schema,'_stage');
+SET entity = _entity;
+SET table = CONCAT(_db , '.' , _schema , '.' , _entity);
+--Instantiate table strategy
+SET table_strat = case when _drop = TRUE then 'create or replace table ' else 'alter table ' end;
+
+--Script to create staging table
+SET create_stage_sql = (SELECT CONCAT('create or replace table ', db, '.',schema_stage, '.',entity, ' (framework_md5 STRING,',  STRING_AGG(CONCAT(LOWER(ATTRIBUTE_NAME) , ' '  ,DATA_TYPE , case when NULLABLE = 'FALSE' then ' NOT NULL' else ' ' END)  ,  ',' order by CAST(attribute_ordinal AS INT) asc) ,')' )
+from dotcomtherapy.framework.attribute WHERE SCHEMA_NAME = schema AND ENTITY_NAME = entity GROUP BY ENTITY_NAME,SCHEMA_NAME);
+
+--Script to create base table
+SET create_base_sql = (SELECT CONCAT('create or replace table ', db, '.',schema, '.',entity, ' (framework_valid_from DATETIME,framework_valid_to DATETIME,framework_dml_action STRING,',  STRING_AGG(CONCAT(LOWER(ATTRIBUTE_NAME) , ' '  ,DATA_TYPE , case when NULLABLE = 'FALSE' then ' NOT NULL' else ' ' END)  ,  ',' order by CAST(attribute_ordinal AS INT) asc) ,' ,framework_md5 STRING)' )
+from dotcomtherapy.framework.attribute WHERE SCHEMA_NAME = schema AND ENTITY_NAME = entity GROUP BY ENTITY_NAME,SCHEMA_NAME);
+
+--select statement from staging table
+SET select_stage_sql = (SELECT CONCAT('select ' , STRING_AGG(LOWER(ATTRIBUTE_NAME),  ',' order by CAST(attribute_ordinal AS INT) asc) , ',CAST(TO_HEX(MD5(CONCAT(' , STRING_AGG(CONCAT('IFNULL(CAST(' , lower(ATTRIBUTE_NAME) , ' AS STRING),"")'),  ',' order by CAST(attribute_ordinal AS INT) asc) , '))) AS STRING) AS framework_md5,current_date AS framework_valid_from from ', 'dotcomtherapy','.',schema,'_stage.',entity )
+from dotcomtherapy.framework.attribute WHERE SCHEMA_NAME = schema AND ENTITY_NAME = entity GROUP BY ENTITY_NAME,SCHEMA_NAME);
+--update clause for merge statement
+SET update_clause_sql = (select CONCAT(STRING_AGG(CONCAT('a.',lower(ATTRIBUTE_NAME),'=b.',LOWER(ATTRIBUTE_NAME)),  ',' order by CAST(attribute_ordinal AS INT) asc) , ',a.framework_md5=b.framework_md5,a.framework_valid_from=b.framework_valid_from')  from dotcomtherapy.framework.attribute WHERE SCHEMA_NAME = schema AND ENTITY_NAME = entity GROUP BY ENTITY_NAME,SCHEMA_NAME);
+
+--Select statement initial
+SET insert_p1_sql = (select CONCAT(STRING_AGG(lower(ATTRIBUTE_NAME),  ',' order by CAST(attribute_ordinal AS INT) asc) , ',FRAMEWORK_MD5,FRAMEWORK_VALID_FROM') from dotcomtherapy.framework.attribute WHERE SCHEMA_NAME = schema AND ENTITY_NAME = entity GROUP BY ENTITY_NAME,SCHEMA_NAME);
+SET insert_p2_sql = (select CONCAT(STRING_AGG('b.'|| lower(ATTRIBUTE_NAME),  ',' order by CAST(attribute_ordinal AS INT) asc) , ',b.FRAMEWORK_MD5,b.FRAMEWORK_VALID_FROM') from dotcomtherapy.framework.attribute WHERE SCHEMA_NAME = schema AND ENTITY_NAME = entity GROUP BY ENTITY_NAME,SCHEMA_NAME);
+
+--Business Keys
+SET biz_keys_sql = (select STRING_AGG(CONCAT('a.',lower(ATTRIBUTE_NAME),'=b.',lower(ATTRIBUTE_NAME)),  ' AND ' order by CAST(attribute_ordinal AS INT) asc) from dotcomtherapy.framework.attribute WHERE SCHEMA_NAME = schema AND ENTITY_NAME = entity AND BUSINESS_KEY = 'TRUE' GROUP BY ENTITY_NAME,SCHEMA_NAME);
+
+--Populate Process store procedure with instantiated variables
+SET process_sproc = (SELECT CONCAT('create or replace PROCEDURE ', db, '.' , schema,'.',entity,'_process()',  'BEGIN MERGE INTO ' , db ,'.',schema,'.',entity,' a USING (' , select_stage_sql , ')b ON ' , biz_keys_sql , ' WHEN MATCHED AND a.FRAMEWORK_MD5 <> b.FRAMEWORK_MD5 THEN UPDATE SET ', update_clause_sql , " WHEN NOT MATCHED THEN INSERT (" , insert_p1_sql ,") VALUES (" , insert_p2_sql , '); END;'));
+
+EXECUTE IMMEDIATE create_stage_sql;
+EXECUTE IMMEDIATE create_base_sql;
+EXECUTE IMMEDIATE process_sproc;
+
+END
+
+
+—---------
+---- Pull attribute defs from postgres
+SELECT table_name,column_name
+,case
+	when data_type in ('uuid','character varying','text','jsonb') then 'string'
+	when data_type in ('integer','bigint') then 'integer'
+	when data_type in ('timestamp without time zone') then 'timestamp'
+	else data_type end data_type
+
+,ordinal_position,FALSE business_key,case when is_nullable = 'YES' then TRUE else FALSE end, table_catalog,table_schema,column_name,data_type
+FROM information_schema.columns
+where table_schema = 'public'
+order by table_name,ordinal_position
+;
+
