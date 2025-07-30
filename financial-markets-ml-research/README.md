@@ -16,7 +16,7 @@ Here, you’ll find modular Python code demonstrating end-to-end data engineerin
 
 ## Project Structure:
 src/
-fetch_okx_data.py
+fetch_market_data.py
 feature_engineering_timeframe.py
 aggregate_features_by_timeframe.py
 train_timeframe_model.py
@@ -31,6 +31,10 @@ orchestration/
 requirements.txt
 .gitignore
 
+## Next Steps:
+- Adding in robust alternative data and combining with OHLCV
+- Heartbeat monitor to close out paper trading
+- Live trading
 
 > **For recruiters/hiring managers:**  
 > This codebase is intended solely as a demonstration of technical proficiency in data/ML engineering and workflow automation.  
