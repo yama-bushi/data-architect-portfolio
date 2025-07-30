@@ -11,7 +11,7 @@ Here you’ll find project examples demonstrating my skills in building modern, 
 A metadata-driven ingestion system using Snowflake external tables, dynamic table/procedure creation, and automation for scalable data onboarding. Demonstrates automation, DDL/DML scripting, and cloud data warehousing.
 
 ### 2. GCP BigQuery Ingestion Framework
-A parameterized framework for automating table and pipeline creation in BigQuery. Uses dynamic SQL and metadata management to enable rapid, scalable schema evolution and upsert logic—ideal for enterprise ingestion and ETL teams.
+Much like the AWS ingestion framework with some key improvements. A parameterized framework for automating table and pipeline creation in BigQuery. Uses dynamic SQL and metadata management to enable rapid, scalable schema evolution and upsert logic—ideal for enterprise ingestion and ETL teams.
 
 ### 3. Cloud Financial ARIMA & Vision ML Exploration
 End-to-end pipeline for ingesting crypto time series into GCP (Cloud Storage, BigQuery), with automated feature engineering, chart generation, and ML experiments (including BigQuery ARIMA forecasting and chart image recognition).
