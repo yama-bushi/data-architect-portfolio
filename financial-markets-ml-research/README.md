@@ -33,6 +33,9 @@ requirements.txt
 
 ## Next Steps:
 - Adding in robust alternative data and combining with OHLCV
+- Per Symbol models light up at 1000 bars (usually takes 2+ weeks to fill from free source)
+    - Parameter tuning for weighting
+    - Test which wins, winner take all or weighting
 - Heartbeat monitor to close out paper trading
 - Live trading
 
