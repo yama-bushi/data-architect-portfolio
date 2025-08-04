@@ -36,8 +36,13 @@ requirements.txt
 - Per Symbol models light up at 1000 bars (usually takes 2+ weeks to fill from free source)
     - Parameter tuning for weighting
     - Test which wins, winner take all or weighting
+- Short and Long Support
+- Dynamic sizing and Cooldown hours
 - Heartbeat monitor to close out paper trading
 - Live trading
+    - Modular Terraform Design for multiple bots on demand
+- Centralized Github for logic and risk ratio adjustments per bot.
+- Central Trade ideas merged into bot before activity.
 
 > **For recruiters/hiring managers:**  
 > This codebase is intended solely as a demonstration of technical proficiency in data/ML engineering and workflow automation.  
