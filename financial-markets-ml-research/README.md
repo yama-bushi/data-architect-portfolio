@@ -1,6 +1,6 @@
 # Financial Markets ML Research (Portfolio Demo)
 
-This project grew out of my exploration of concepts in Stefan Jansen’s *Machine Learning for Algorithmic Trading*. Inspired by the book’s deep dive into modern quantitative finance, I set out to build my own **cloud-native, ML-driven data pipeline** for financial market research and experimentation.
+This project grew out of my exploration of concepts in Stefan Jansen’s *Machine Learning for Algorithmic Trading*. Inspired by the book’s deep dive into modern quantitative finance, I set out to build my own **cloud-native, ML-driven data pipeline** for financial market research and experimentation. Built leveraging AI to fully understand concepts and implement them piece by piece.
 
 Here, you’ll find modular Python code demonstrating end-to-end data engineering for market data: ingestion, feature engineering, modeling, parameter optimization, backtesting, and (simulated) paper trading—*without any proprietary trading logic or live signals*.
 
